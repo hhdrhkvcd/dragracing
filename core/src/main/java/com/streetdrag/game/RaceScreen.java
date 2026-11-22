@@ -42,9 +42,7 @@ final class RaceScreen extends Base3DScreen {
         player.setFinishDistance(finishDistance);
         rival.setFinishDistance(finishDistance);
         player.setGearRatios(game.profile.gearRatios);
-        rival.setGearRatios(game.profile.gearRatios);
         player.setFinalDrive(game.profile.finalDrive());
-        rival.setFinalDrive(game.profile.finalDrive());
         player.setEngineMultiplier(game.profile.engineMultiplier() * game.profile.turboMultiplier());
         player.setGripMultiplier(game.profile.gripMultiplier());
         player.setGearboxMultiplier(game.profile.gearboxMultiplier());
