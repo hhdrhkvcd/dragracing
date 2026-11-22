@@ -22,7 +22,7 @@ final class RaceScreen extends Base3DScreen {
     private boolean gas, brake, clutch, nitro;
     private boolean started, finished, resultPaid;
     private boolean won;
-    private float countdown = 3f, elapsed;
+    private float countdown = 3f, elapsed, raceElapsed;
     private float playerX = -1.65f, rivalX = 1.65f;
 
     RaceScreen(StreetDragGame game) {
@@ -131,11 +131,12 @@ final class RaceScreen extends Base3DScreen {
         started = finished = resultPaid = won = false;
         countdown = 3f;
         elapsed = 0f;
+        raceElapsed = 0f;
     }
 
     private void payResult() {
         if (resultPaid) return;
-        game.profile.recordRaceResult(won);
+        game.profile.recordRaceResult(won, raceElapsed);
         resultPaid = true;
     }
 
@@ -148,6 +149,7 @@ final class RaceScreen extends Base3DScreen {
             return;
         }
 
+        raceElapsed += delta;
         player.update(delta, gas ? 1f : 0f, brake ? 1f : 0f, clutch ? 1f : 0f, nitro);
         if (rival.getRpm() > 6500f) rival.shiftUp();
         if (rival.getRpm() < 2100f && rival.getGear() > 1 && rival.getSpeedKmh() < 30f) rival.shiftDown();
@@ -234,6 +236,10 @@ final class RaceScreen extends Base3DScreen {
         text("YOU: " + playerSpec.name, 34, 620, .90f, Color.CYAN);
         text("RIVAL: " + rivalSpec.name, 970, 650, .88f, Color.ORANGE);
         text("$ " + game.profile.money, 1080, 685, 1f, Color.GREEN);
+        text("TIME  " + String.format("%.2f", raceElapsed) + " S", 520, 650, 1.02f, Color.WHITE);
+        float bestTime = game.profile.bestTime();
+        text("BEST  " + (bestTime > 0f ? String.format("%.2f S", bestTime) : "--"),
+             520, 620, .86f, Color.YELLOW);
         text("SPEED  " + (int)player.getSpeedKmh() + " KM/H", 38, 575, 1.2f, Color.WHITE);
         text("RPM  " + (int)player.getRpm(), 455, 550, 1.05f, Color.WHITE);
         text("GEAR  " + player.getGear(), 890, 575, 1.1f, Color.WHITE);
