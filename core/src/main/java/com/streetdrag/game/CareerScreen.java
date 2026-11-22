@@ -96,6 +96,12 @@ final class CareerScreen extends Base3DScreen {
         text("CASH  $ " + game.profile.money, 58, 500, 1.05f, Color.GREEN);
         text("EVENTS CLEARED  " + game.profile.careerUnlocked + " / " + (EVENT_NAMES.length - 1),
              58, 455, .88f, Color.LIGHT_GRAY);
+        float pb402 = game.profile.best402;
+        float pb804 = game.profile.best804;
+        text("BEST 402 M  " + (pb402 > 0f ? String.format("%.2f S", pb402) : "--"),
+             58, 415, .82f, Color.CYAN);
+        text("BEST 804 M  " + (pb804 > 0f ? String.format("%.2f S", pb804) : "--"),
+             58, 382, .82f, Color.CYAN);
         text("SELECT AN UNLOCKED EVENT", 610, 565, 1.08f, Color.CYAN);
 
         for (int i = 0; i < EVENT_NAMES.length; i++) {
