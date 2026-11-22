@@ -9,12 +9,15 @@ import com.badlogic.gdx.graphics.g3d.ModelBatch;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 
-/** 402 m offline race with a local AI rival and imported GLB vehicles. */
+/** Offline 402/804 m drag race against a local AI rival. */
 final class RaceScreen extends Base3DScreen {
     private final VehicleSpec playerSpec, rivalSpec;
     private final CarPhysics player, rival;
     private final VehicleModel playerModel, rivalModel;
     private final PbrVehicleFleetRenderer pbr;
+    private final float finishDistance;
+    private final boolean careerRace;
+    private final int careerEventIndex;
     private int cameraMode = 0;
     private boolean gas, brake, clutch, nitro;
     private boolean started, finished, resultPaid;
@@ -25,21 +28,33 @@ final class RaceScreen extends Base3DScreen {
     RaceScreen(StreetDragGame game) {
         super(game);
         world = new World3D(false);
+        careerRace = game.profile.careerMode;
+        careerEventIndex = game.profile.careerEvent;
+        finishDistance = game.profile.raceDistance;
         playerSpec = game.profile.car();
-        rivalSpec = VehicleSpec.ALL[(game.profile.selected + 1) % VehicleSpec.ALL.length];
+        int rivalIndex = careerRace
+            ? game.profile.careerOpponentIndex
+            : (game.profile.selected + 1) % VehicleSpec.ALL.length;
+        rivalSpec = VehicleSpec.ALL[rivalIndex];
+
         player = playerSpec.newPhysics();
         rival = rivalSpec.newPhysics();
+        player.setFinishDistance(finishDistance);
+        rival.setFinishDistance(finishDistance);
+        player.setGearRatios(game.profile.gearRatios);
+        rival.setGearRatios(game.profile.gearRatios);
+        player.setFinalDrive(game.profile.finalDrive());
+        rival.setFinalDrive(game.profile.finalDrive());
         player.setEngineMultiplier(game.profile.engineMultiplier() * game.profile.turboMultiplier());
         player.setGripMultiplier(game.profile.gripMultiplier());
         player.setGearboxMultiplier(game.profile.gearboxMultiplier());
-        rival.setEngineMultiplier(1.03f);
+        rival.setEngineMultiplier(careerRace ? .92f + careerEventIndex * .035f : 1.03f);
 
         pbr = new PbrVehicleFleetRenderer(camera, playerSpec, rivalSpec);
         playerModel = pbr.hasModel(playerSpec) ? null : new VehicleModel(playerSpec);
         rivalModel = pbr.hasModel(rivalSpec) ? null : new VehicleModel(rivalSpec);
-
         camera.fieldOfView = 64f;
-        camera.far = 850f;
+        camera.far = 1050f;
     }
 
     @Override public void show() {
@@ -51,12 +66,18 @@ final class RaceScreen extends Base3DScreen {
             }
 
             @Override public boolean touchUp(int sx, int sy, int pointer, int button) {
-                gas = false; brake = false; clutch = false; nitro = false;
+                gas = false;
+                brake = false;
+                clutch = false;
+                nitro = false;
                 return true;
             }
 
             @Override public boolean keyDown(int key) {
-                if (key == Input.Keys.ESCAPE) { game.showGarage(); return true; }
+                if (key == Input.Keys.ESCAPE) {
+                    if (careerRace) game.showCareer(); else game.showMenu();
+                    return true;
+                }
                 if (key == Input.Keys.C) { cameraMode = (cameraMode + 1) % 4; return true; }
                 if (key == Input.Keys.R) { resetRace(); return true; }
                 if (finished && key == Input.Keys.ENTER) { resetRace(); return true; }
@@ -81,27 +102,41 @@ final class RaceScreen extends Base3DScreen {
 
     private void handleTouch(float x, float y) {
         if (finished) {
-            if (x < 230 && y < 160) game.showGarage(); else resetRace();
+            if (x < 230f && y < 165f) {
+                if (careerRace) game.showCareer(); else game.showMenu();
+            } else {
+                resetRace();
+            }
             return;
         }
-        if (x < 170 && y > 620) { game.showGarage(); return; }
-        if (y > 535 && x > 820) { cameraMode = (cameraMode + 1) % 4; return; }
-        if (y < 165) {
-            if (x < 190) { brake = true; gas = false; }
-            else if (x < 390) nitro = true;
-            else if (x < 570) clutch = true;
-            else if (x < 760) player.shiftDown();
-            else if (x < 950) player.shiftUp();
+        if (x < 170f && y > 620f) {
+            if (careerRace) game.showCareer(); else game.showMenu();
+            return;
+        }
+        if (y > 535f && x > 820f) { cameraMode = (cameraMode + 1) % 4; return; }
+        if (y < 165f) {
+            if (x < 190f) { brake = true; gas = false; }
+            else if (x < 390f) nitro = true;
+            else if (x < 570f) clutch = true;
+            else if (x < 760f) player.shiftDown();
+            else if (x < 950f) player.shiftUp();
             else { gas = true; brake = false; }
         }
     }
 
     private void resetRace() {
-        player.reset(); rival.reset();
+        player.reset();
+        rival.reset();
         gas = brake = clutch = nitro = false;
         started = finished = resultPaid = won = false;
         countdown = 3f;
         elapsed = 0f;
+    }
+
+    private void payResult() {
+        if (resultPaid) return;
+        game.profile.recordRaceResult(won);
+        resultPaid = true;
     }
 
     private void updateRace(float delta) {
@@ -114,22 +149,21 @@ final class RaceScreen extends Base3DScreen {
         }
 
         player.update(delta, gas ? 1f : 0f, brake ? 1f : 0f, clutch ? 1f : 0f, nitro);
-        if (rival.getRpm() > 6550f) rival.shiftUp();
+        if (rival.getRpm() > 6500f) rival.shiftUp();
         if (rival.getRpm() < 2100f && rival.getGear() > 1 && rival.getSpeedKmh() < 30f) rival.shiftDown();
-        boolean aiNitro = rival.getDistance() > 45f && rival.getDistance() < 245f;
+        boolean aiNitro = rival.getDistance() > finishDistance * .12f
+            && rival.getDistance() < finishDistance * .62f;
         rival.update(delta, .96f, 0f, 0f, aiNitro);
 
         if (player.isFinished() || rival.isFinished()) {
             won = player.getDistance() >= rival.getDistance();
-            if (!finished) {
-                finished = true;
-                if (!resultPaid) { game.profile.reward(won ? 25000 : 5000); resultPaid = true; }
-            }
-        }
-        if (elapsed > 55f) {
             finished = true;
+            payResult();
+        }
+        if (elapsed > 90f && !finished) {
             won = player.getDistance() >= rival.getDistance();
-            if (!resultPaid) { game.profile.reward(won ? 25000 : 5000); resultPaid = true; }
+            finished = true;
+            payResult();
         }
     }
 
@@ -140,7 +174,7 @@ final class RaceScreen extends Base3DScreen {
         Vector3 target = new Vector3();
         if (cameraMode == 0) {
             position.set(playerX, 3.2f, pz + 8.6f);
-            target.set(playerX, .85f, pz - 9.0f);
+            target.set(playerX, .85f, pz - 9f);
         } else if (cameraMode == 1) {
             position.set(playerX, 1.55f, pz - 1.25f);
             target.set(playerX, 1.35f, pz - 22f);
@@ -155,7 +189,6 @@ final class RaceScreen extends Base3DScreen {
         camera.lookAt(target);
         camera.up.set(Vector3.Y);
         camera.update();
-
         if (playerModel != null) playerModel.setTransform(playerX, 0f, pz, 0f);
         if (rivalModel != null) rivalModel.setTransform(rivalX, 0f, rz, 0f);
         pbr.setTransform(playerSpec, playerX, 0f, pz, 0f);
@@ -167,9 +200,7 @@ final class RaceScreen extends Base3DScreen {
         if (rivalModel != null) rivalModel.render(batch, world.environment);
     }
 
-    @Override void renderPbr(float delta) {
-        pbr.render(camera, delta);
-    }
+    @Override void renderPbr(float delta) { pbr.render(camera, delta); }
 
     @Override public void render(float delta) {
         delta = Math.min(delta, .04f);
@@ -185,8 +216,8 @@ final class RaceScreen extends Base3DScreen {
         panel(390, 665, 500, 14, new Color(.05f, .07f, .10f, 1));
         panel(390, 665, 500 * player.getProgress(), 14, new Color(.08f, .82f, .42f, 1));
         panel(430, 580, 420, 13, new Color(.04f, .05f, .07f, 1));
-        panel(430, 580, 420 * Math.min(player.getRpm() / 7200f, 1f), 13,
-            player.getRpm() > 6400f ? Color.RED : Color.GREEN);
+        panel(430, 580, 420 * Math.min(player.getRpm() / 7200f, 1f),
+            13, player.getRpm() > 6400f ? Color.RED : Color.GREEN);
 
         Color gasColor = gas ? new Color(.1f, .9f, .38f, 1) : new Color(.07f, .40f, .24f, 1);
         button(1000, 22, 250, 115, gasColor);
@@ -197,31 +228,39 @@ final class RaceScreen extends Base3DScreen {
         button(780, 22, 170, 115, new Color(.13f, .17f, .24f, 1));
 
         beginText();
-        text("STREET DRAG  /  402 M", 34, 685, 1.55f, Color.WHITE);
-        text("YOU: " + playerSpec.name, 34, 650, .95f, Color.CYAN);
+        text("STREET DRAG  /  " + (int)finishDistance + " M", 34, 685, 1.55f, Color.WHITE);
+        text(careerRace ? "CAREER EVENT " + (careerEventIndex + 1) : "QUICK RACE",
+             34, 650, .90f, Color.YELLOW);
+        text("YOU: " + playerSpec.name, 34, 620, .90f, Color.CYAN);
         text("RIVAL: " + rivalSpec.name, 970, 650, .88f, Color.ORANGE);
         text("$ " + game.profile.money, 1080, 685, 1f, Color.GREEN);
         text("SPEED  " + (int)player.getSpeedKmh() + " KM/H", 38, 575, 1.2f, Color.WHITE);
         text("RPM  " + (int)player.getRpm(), 455, 550, 1.05f, Color.WHITE);
         text("GEAR  " + player.getGear(), 890, 575, 1.1f, Color.WHITE);
-        text("DIST  " + (int)player.getDistance() + " / 402 M", 890, 545, .9f, Color.LIGHT_GRAY);
+        text("DIST  " + (int)player.getDistance() + " / " + (int)finishDistance + " M",
+             890, 545, .9f, Color.LIGHT_GRAY);
         text("CAMERA  [C]", 1050, 575, .92f, Color.CYAN);
         String[] cameraNames = {"CHASE", "HOOD", "SIDE", "WIDE"};
         text("VIEW: " + cameraNames[cameraMode], 1050, 545, .92f, Color.WHITE);
-        text("BRAKE", 65, 80, 1.0f, Color.WHITE);
+        text("BRAKE", 65, 80, 1f, Color.WHITE);
         text("NITRO " + (int)player.getNitro() + "%", 245, 80, .95f, Color.WHITE);
         text("CLUTCH", 430, 80, .95f, Color.WHITE);
         text("DOWN", 635, 80, .95f, Color.WHITE);
         text("UP", 840, 80, .95f, Color.WHITE);
         text("GAS", 1080, 80, 1.25f, Color.WHITE);
-        if (!started && !finished) text(String.valueOf(Math.max(1, (int)Math.ceil(countdown))), 620, 410, 4f, Color.YELLOW);
+        if (!started && !finished) text(String.valueOf(Math.max(1, (int)Math.ceil(countdown))),
+            620, 410, 4f, Color.YELLOW);
         if (started && !finished) text("RACE LIVE", 565, 470, .9f, Color.GREEN);
         if (finished) {
             text(won ? "YOU WIN!" : "YOU LOSE!", 500, 455, 2.8f, won ? Color.GREEN : Color.RED);
-            text(won ? "REWARD: $25 000" : "REWARD: $5 000", 505, 415, 1.25f, Color.WHITE);
-            text("TAP TO RACE AGAIN  /  BACK TO GARAGE", 395, 180, 1f, Color.YELLOW);
+            text(won ? (careerRace ? "CAREER PRIZE: $" + (35000 + careerEventIndex * 5000) : "REWARD: $25 000")
+                : (careerRace ? "RETRY PRIZE: $6 000" : "REWARD: $5 000"),
+                505, 415, 1.05f, Color.WHITE);
+            text(careerRace ? "TAP LEFT: CAREER MAP  /  ENTER: REPLAY"
+                : "TAP LEFT: MENU  /  ENTER: REPLAY", 395, 180, .95f, Color.YELLOW);
         }
-        text("HOLD SPACE: GAS   UP: SHIFT   Z: DOWN   N: NITRO   C: CAMERA", 320, 178, .78f, Color.LIGHT_GRAY);
+        text("HOLD SPACE: GAS   UP: SHIFT   Z: DOWN   N: NITRO   C: CAMERA",
+             320, 178, .78f, Color.LIGHT_GRAY);
         endText();
     }
 
