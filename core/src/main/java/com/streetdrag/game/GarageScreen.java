@@ -8,10 +8,10 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g3d.ModelBatch;
 import com.badlogic.gdx.math.Vector3;
 
-/** 3D garage using the imported GLB fleet and local vehicle selection. */
+/** 3D garage. The PBR environment is retained when the selected car changes. */
 final class GarageScreen extends Base3DScreen {
-    private final VehicleModel car;
-    private final VehicleSpec spec;
+    private VehicleModel fallbackCar;
+    private VehicleSpec spec;
     private final PbrVehicleFleetRenderer pbr;
 
     GarageScreen(StreetDragGame game) {
@@ -19,16 +19,27 @@ final class GarageScreen extends Base3DScreen {
         world = new World3D(true);
         spec = game.profile.car();
 
-        pbr = new PbrVehicleFleetRenderer(camera, spec);
-        car = pbr.hasModel(spec) ? null : new VehicleModel(spec);
-        if (car != null) car.setTransform(0f, 0f, 0f, 0f);
-        pbr.setTransform(spec, 0f, 0f, 0f, 0f);
-
+        pbr = new PbrVehicleFleetRenderer(camera);
+        selectCurrentCar();
         camera.fieldOfView = 48f;
         camera.position.set(8.4f, 3.1f, .25f);
         camera.lookAt(0f, .9f, 0f);
         camera.far = 100f;
         camera.update();
+    }
+
+    private void selectCurrentCar() {
+        spec = game.profile.car();
+        pbr.setActiveVehicle(spec);
+        if (fallbackCar != null) {
+            fallbackCar.dispose();
+            fallbackCar = null;
+        }
+        if (!pbr.hasModel(spec)) {
+            fallbackCar = new VehicleModel(spec);
+            fallbackCar.setTransform(0f, 0f, 0f, 0f);
+        }
+        pbr.setTransform(spec, 0f, 0f, 0f, 0f);
     }
 
     @Override public void show() {
@@ -62,11 +73,11 @@ final class GarageScreen extends Base3DScreen {
 
     private void nextCar(int amount) {
         game.profile.select(game.profile.selected + amount);
-        game.showGarage();
+        selectCurrentCar();
     }
 
     @Override void renderModels(ModelBatch batch) {
-        if (car != null) car.render(batch, world.environment);
+        if (fallbackCar != null) fallbackCar.render(batch, world.environment);
     }
 
     @Override void renderPbr(float delta) {
@@ -82,7 +93,7 @@ final class GarageScreen extends Base3DScreen {
         panel(20, 22, 360, 96, new Color(.07f, .20f, .38f, 1));
         panel(405, 22, 400, 96, new Color(.09f, .12f, .18f, 1));
         panel(830, 22, 430, 96, new Color(.05f, .34f, .20f, 1));
-        VehicleSpec current = game.profile.car();
+        VehicleSpec current = spec;
         beginText();
         text("STREET DRAG  /  3D GARAGE", 38, 675, 2.0f, Color.WHITE);
         text(current.name, 45, 625, 1.35f, Color.WHITE);
@@ -99,7 +110,7 @@ final class GarageScreen extends Base3DScreen {
 
     @Override public void dispose() {
         pbr.dispose();
-        if (car != null) car.dispose();
+        if (fallbackCar != null) fallbackCar.dispose();
         super.dispose();
     }
 }
