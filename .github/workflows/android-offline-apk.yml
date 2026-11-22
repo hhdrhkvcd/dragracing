@@ -31,7 +31,7 @@ jobs:
       - name: Build offline debug APK
         run: |
           chmod +x ./gradlew
-          ./gradlew --no-daemon :core:compileJava :android:assembleDebug
+          ./gradlew --no-daemon :core:test :android:assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
