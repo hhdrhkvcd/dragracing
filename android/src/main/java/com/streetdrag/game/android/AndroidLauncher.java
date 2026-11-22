@@ -1,0 +1,19 @@
+package com.streetdrag.game.android;
+
+import android.os.Bundle;
+
+import com.badlogic.gdx.backends.android.AndroidApplication;
+import com.badlogic.gdx.backends.android.AndroidApplicationConfiguration;
+import com.streetdrag.game.StreetDragGame;
+
+/** Launches the Android application. */
+public class AndroidLauncher extends AndroidApplication {
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        AndroidApplicationConfiguration configuration = new AndroidApplicationConfiguration();
+        configuration.useGL30 = true;
+        configuration.useImmersiveMode = true; // Recommended, but not required.
+        initialize(new StreetDragGame(), configuration);
+    }
+}

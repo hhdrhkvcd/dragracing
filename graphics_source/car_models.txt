@@ -1,0 +1,12 @@
+boxy-off-roader.glb
+electric-fastback.glb
+executive-sedan.glb
+grand-tourer.glb
+hot-hatchback.glb
+luxury-limousine.glb
+luxury-suv.glb
+mid-engine-supercar.glb
+muscle-coupe.glb
+rear-engine-sports-coupe.glb
+retro-city-car.glb
+sport-sedan.glb
