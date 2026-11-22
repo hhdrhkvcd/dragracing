@@ -18,9 +18,9 @@ final class GarageScreen extends Base3DScreen {
         super(game);
         world = new World3D(true);
         spec = game.profile.car();
-
         pbr = new PbrVehicleFleetRenderer(camera);
         selectCurrentCar();
+
         camera.fieldOfView = 48f;
         camera.position.set(8.4f, 3.1f, .25f);
         camera.lookAt(0f, .9f, 0f);
@@ -49,7 +49,7 @@ final class GarageScreen extends Base3DScreen {
                 game.hudViewport.unproject(p3);
                 float x = p3.x, y = p3.y;
                 if (y < 125f) {
-                    if (x < 400f) nextCar(-1);
+                    if (x < 400f) game.showMenu();
                     else if (x < 835f) game.showTuning();
                     else game.showRace();
                     return true;
@@ -62,6 +62,7 @@ final class GarageScreen extends Base3DScreen {
             }
 
             @Override public boolean keyDown(int key) {
+                if (key == Input.Keys.ESCAPE) game.showMenu();
                 if (key == Input.Keys.LEFT) nextCar(-1);
                 if (key == Input.Keys.RIGHT) nextCar(1);
                 if (key == Input.Keys.T) game.showTuning();
@@ -93,18 +94,17 @@ final class GarageScreen extends Base3DScreen {
         panel(20, 22, 360, 96, new Color(.07f, .20f, .38f, 1));
         panel(405, 22, 400, 96, new Color(.09f, .12f, .18f, 1));
         panel(830, 22, 430, 96, new Color(.05f, .34f, .20f, 1));
-        VehicleSpec current = spec;
         beginText();
         text("STREET DRAG  /  3D GARAGE", 38, 675, 2.0f, Color.WHITE);
-        text(current.name, 45, 625, 1.35f, Color.WHITE);
-        text("POWER  " + (int)(current.powerHp * game.profile.engineMultiplier()) + " HP", 45, 582, 1.15f, Color.CYAN);
-        text("TORQUE  " + (int)current.torqueNm + " NM", 45, 548, 1.05f, Color.LIGHT_GRAY);
-        text(current.awd ? "DRIVE  AWD" : "DRIVE  RWD", 45, 516, 1.05f, Color.LIGHT_GRAY);
+        text(spec.name, 45, 625, 1.35f, Color.WHITE);
+        text("POWER  " + (int)(spec.powerHp * game.profile.engineMultiplier()) + " HP", 45, 582, 1.15f, Color.CYAN);
+        text("TORQUE  " + (int)spec.torqueNm + " NM", 45, 548, 1.05f, Color.LIGHT_GRAY);
+        text(spec.awd ? "DRIVE  AWD" : "DRIVE  RWD", 45, 516, 1.05f, Color.LIGHT_GRAY);
         text("$ " + game.profile.money, 1010, 675, 1.45f, Color.GREEN);
-        text("<  CARS", 105, 78, 1.35f, Color.WHITE);
+        text("MENU", 155, 78, 1.35f, Color.WHITE);
         text("TUNING", 535, 78, 1.35f, Color.WHITE);
         text("RACE 402M  >", 940, 78, 1.35f, Color.WHITE);
-        text("A / D: CHANGE CAR     ENTER: RACE     T: TUNING", 405, 172, .85f, Color.LIGHT_GRAY);
+        text("<  PREVIOUS CAR                    NEXT CAR  >", 430, 172, .85f, Color.LIGHT_GRAY);
         endText();
     }
 
