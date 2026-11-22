@@ -33,6 +33,9 @@ public final class VehicleSpec {
         new VehicleSpec("bmw_m5", "BMW M5 F90", 1930, 625, 750, .88f, true, new Color(.08f,.12f,.18f,1)),
         new VehicleSpec("stagea", "NISSAN STAGEA 260RS", 1720, 280, 370, .92f, true, new Color(.15f,.18f,.22f,1)),
         new VehicleSpec("audi_rs7", "AUDI RS7", 2050, 630, 850, .83f, true, new Color(.12f,.13f,.15f,1)),
-        new VehicleSpec("amg_gtr", "MERCEDES-AMG GT R", 1630, 585, 700, .74f, false, new Color(.06f,.38f,.20f,1))
+        new VehicleSpec("amg_gtr", "MERCEDES-AMG GT R", 1630, 585, 700, .74f, false, new Color(.06f,.38f,.20f,1)),
+        // Additional generic catalogue entries expose the remaining two GLB assets.
+        new VehicleSpec("luxury_suv", "LUXURY SUV", 2250, 520, 750, .94f, true, new Color(.12f,.15f,.19f,1)),
+        new VehicleSpec("retro_city", "RETRO CITY TURBO", 1100, 180, 250, .78f, false, new Color(.63f,.14f,.10f,1))
     };
 }
