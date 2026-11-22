@@ -45,6 +45,7 @@ public final class StreetDragGame extends Game {
     }
 
     public void showMenu() { replaceScreen(new MainMenuScreen(this)); }
+    public void showCareer() { replaceScreen(new CareerScreen(this)); }
     public void showGarage() { replaceScreen(new GarageScreen(this)); }
     public void showTuning() { replaceScreen(new TuningScreen(this)); }
     public void showRace() { replaceScreen(new RaceScreen(this)); }
@@ -58,18 +59,34 @@ public final class StreetDragGame extends Game {
 
     /** Device-local save. No account or network service is used. */
     static final class Profile {
+        private static final float[] DEFAULT_RATIOS = {3.20f, 2.15f, 1.58f, 1.22f, .98f, .80f};
         private final Preferences prefs = Gdx.app.getPreferences("StreetDrag3D");
         int money = prefs.getInteger("money", 125000);
         int selected = prefs.getInteger("selected", 0);
+        int careerUnlocked = prefs.getInteger("career_unlocked", 0);
+        int careerWins = prefs.getInteger("career_wins", 0);
+        int raceDistance = prefs.getInteger("race_distance", 402);
+        int careerEvent;
+        int careerOpponentIndex;
+        boolean careerMode;
         final int[][] levels = new int[VehicleSpec.ALL.length][4];
+        final float[] gearRatios = new float[6];
+        float finalDrive;
 
         Profile() {
             selected = Math.max(0, Math.min(selected, VehicleSpec.ALL.length - 1));
+            careerUnlocked = Math.max(0, Math.min(careerUnlocked, CareerScreen.EVENT_NAMES.length - 1));
+            careerWins = Math.max(0, careerWins);
+            raceDistance = raceDistance == 804 ? 804 : 402;
             for (int c = 0; c < levels.length; c++) {
                 for (int u = 0; u < 4; u++) {
                     levels[c][u] = Math.max(1, Math.min(10, prefs.getInteger("u_" + c + "_" + u, 1)));
                 }
             }
+            for (int i = 0; i < gearRatios.length; i++) {
+                gearRatios[i] = clamp(prefs.getFloat("ratio_" + selected + "_" + i, DEFAULT_RATIOS[i]), .5f, 4.5f);
+            }
+            finalDrive = clamp(prefs.getFloat("final_drive_" + selected, 3.55f), 2f, 5.5f);
         }
 
         VehicleSpec car() { return VehicleSpec.ALL[selected]; }
@@ -77,6 +94,7 @@ public final class StreetDragGame extends Game {
         int upgradeCost(int category) { return 12000 * levels[selected][category]; }
 
         boolean upgrade(int category) {
+            if (category < 0 || category >= 4) return false;
             int cost = upgradeCost(category);
             if (levels[selected][category] >= 10 || money < cost) return false;
             money -= cost;
@@ -87,6 +105,58 @@ public final class StreetDragGame extends Game {
 
         void select(int index) {
             selected = (index + VehicleSpec.ALL.length) % VehicleSpec.ALL.length;
+            loadGearbox();
+            save();
+        }
+
+        private void loadGearbox() {
+            for (int i = 0; i < gearRatios.length; i++) {
+                gearRatios[i] = clamp(prefs.getFloat("ratio_" + selected + "_" + i, DEFAULT_RATIOS[i]), .5f, 4.5f);
+            }
+            finalDrive = clamp(prefs.getFloat("final_drive_" + selected, 3.55f), 2f, 5.5f);
+        }
+
+        float gearRatio(int gear) { return gearRatios[Math.max(0, Math.min(gear, 5))]; }
+        void setGearRatio(int gear, float value) {
+            if (gear < 0 || gear >= gearRatios.length) return;
+            gearRatios[gear] = clamp(value, .5f, 4.5f);
+            save();
+        }
+        float finalDrive() { return finalDrive; }
+        void setFinalDrive(float value) {
+            finalDrive = clamp(value, 2f, 5.5f);
+            save();
+        }
+
+        void toggleRaceDistance() {
+            raceDistance = raceDistance == 402 ? 804 : 402;
+            save();
+        }
+
+        void startCareerEvent(int event) {
+            if (event < 0 || event >= CareerScreen.EVENT_NAMES.length || event > careerUnlocked) return;
+            careerMode = true;
+            careerEvent = event;
+            careerOpponentIndex = CareerScreen.OPPONENTS[event];
+            raceDistance = event % 2 == 0 ? 402 : 804;
+            save();
+        }
+
+        void recordRaceResult(boolean won) {
+            if (careerMode) {
+                if (won) {
+                    money += 35000 + careerEvent * 5000;
+                    careerWins++;
+                    if (careerEvent == careerUnlocked && careerUnlocked < CareerScreen.EVENT_NAMES.length - 1) {
+                        careerUnlocked++;
+                    }
+                } else {
+                    money += 6000;
+                }
+                careerMode = false;
+            } else {
+                money += won ? 25000 : 5000;
+            }
             save();
         }
 
@@ -103,10 +173,19 @@ public final class StreetDragGame extends Game {
         void save() {
             prefs.putInteger("money", money);
             prefs.putInteger("selected", selected);
+            prefs.putInteger("career_unlocked", careerUnlocked);
+            prefs.putInteger("career_wins", careerWins);
+            prefs.putInteger("race_distance", raceDistance);
             for (int c = 0; c < levels.length; c++) {
                 for (int u = 0; u < 4; u++) prefs.putInteger("u_" + c + "_" + u, levels[c][u]);
             }
+            for (int i = 0; i < gearRatios.length; i++) prefs.putFloat("ratio_" + selected + "_" + i, gearRatios[i]);
+            prefs.putFloat("final_drive_" + selected, finalDrive);
             prefs.flush();
+        }
+
+        private static float clamp(float value, float min, float max) {
+            return Math.max(min, Math.min(max, value));
         }
     }
 }
