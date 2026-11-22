@@ -1,6 +1,7 @@
 package com.streetdrag.game;
 
 import com.badlogic.gdx.Gdx;
+import com.streetdrag.game.rendering.PbrVehicleFleetRenderer;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.graphics.Color;
@@ -9,7 +10,9 @@ import com.badlogic.gdx.math.Vector2;
 
 /** 3D vehicle in the workshop plus four persistent upgrade categories. */
 final class TuningScreen extends Base3DScreen {
-    private final VehicleModel car;
+    private final VehicleModel fallbackCar;
+    private final VehicleSpec spec;
+    private final PbrVehicleFleetRenderer pbr;
     private final String[] names={"ENGINE","TURBO","GEARBOX","TIRES"};
     private String message="";
     private float messageTime;
@@ -17,7 +20,12 @@ final class TuningScreen extends Base3DScreen {
     TuningScreen(StreetDragGame game) {
         super(game);
         world=new World3D(true);
-        car=new VehicleModel(game.profile.car());
+        spec=game.profile.car();
+        fallbackCar=new VehicleModel(spec);
+
+        pbr=new PbrVehicleFleetRenderer(camera,spec);
+        pbr.setTransform(spec,0f,0f,0f,0f);
+
         camera.fieldOfView=52f;
         camera.position.set(7.5f,3f,.3f);
         camera.lookAt(0,.8f,0);
@@ -46,11 +54,19 @@ final class TuningScreen extends Base3DScreen {
         messageTime=2.2f;
     }
 
-    @Override void renderModels(ModelBatch batch) { car.render(batch,world.environment); }
+    @Override void renderModels(ModelBatch batch) {
+        if (!pbr.hasModel(spec)) {
+            fallbackCar.render(batch,world.environment);
+        }
+    }
+
+    @Override void renderPbr(float delta) {
+        pbr.render(camera,delta);
+    }
 
     @Override public void render(float delta) {
         clear(.012f,.018f,.03f);
-        renderWorld();
+        renderWorld(delta);
         beginHud();
         panel(805,0,475,720,new Color(.012f,.022f,.04f,.91f));
         panel(25,22,205,75,new Color(.08f,.15f,.25f,1));
@@ -73,5 +89,9 @@ final class TuningScreen extends Base3DScreen {
         endText();
     }
 
-    @Override public void dispose() { car.dispose(); super.dispose(); }
+    @Override public void dispose() {
+        pbr.dispose();
+        fallbackCar.dispose();
+        super.dispose();
+    }
 }
