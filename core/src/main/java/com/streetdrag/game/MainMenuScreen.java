@@ -10,17 +10,17 @@ import com.streetdrag.game.rendering.PbrVehicleFleetRenderer;
 
 /** Offline main menu. All actions stay on-device and use the local profile. */
 final class MainMenuScreen extends Base3DScreen {
-    private final VehicleSpec spec;
+    private VehicleSpec spec;
     private final PbrVehicleFleetRenderer pbr;
-    private final VehicleModel fallbackCar;
+    private VehicleModel fallbackCar;
 
     MainMenuScreen(StreetDragGame game) {
         super(game);
         world = new World3D(true);
         spec = game.profile.car();
-        pbr = new PbrVehicleFleetRenderer(camera, spec);
-        fallbackCar = pbr.hasModel(spec) ? null : new VehicleModel(spec);
-        if (fallbackCar != null) fallbackCar.setTransform(0f, 0f, 0f, 0f);
+        pbr = new PbrVehicleFleetRenderer(camera);
+        fallbackCar = null;
+        selectCar();
 
         camera.fieldOfView = 49f;
         camera.position.set(8.6f, 3.2f, .5f);
@@ -46,8 +46,8 @@ final class MainMenuScreen extends Base3DScreen {
                 }
 
                 if (y > 270f && y < 520f) {
-                    if (x < 175f) game.profile.select(game.profile.selected - 1);
-                    else if (x > 1100f) game.profile.select(game.profile.selected + 1);
+                    if (x < 175f) changeCar(-1);
+                    else if (x > 1100f) changeCar(1);
                     return true;
                 }
                 return true;
@@ -57,11 +57,30 @@ final class MainMenuScreen extends Base3DScreen {
                 if (key == Input.Keys.ENTER || key == Input.Keys.SPACE) game.showRace();
                 if (key == Input.Keys.G) game.showGarage();
                 if (key == Input.Keys.T) game.showTuning();
-                if (key == Input.Keys.LEFT) game.profile.select(game.profile.selected - 1);
-                if (key == Input.Keys.RIGHT) game.profile.select(game.profile.selected + 1);
+                if (key == Input.Keys.LEFT) changeCar(-1);
+                if (key == Input.Keys.RIGHT) changeCar(1);
                 return true;
             }
         });
+    }
+
+    private void changeCar(int direction) {
+        game.profile.select(game.profile.selected + direction);
+        selectCar();
+    }
+
+    private void selectCar() {
+        spec = game.profile.car();
+        pbr.setActiveVehicle(spec);
+        if (fallbackCar != null) {
+            fallbackCar.dispose();
+            fallbackCar = null;
+        }
+        if (!pbr.hasModel(spec)) {
+            fallbackCar = new VehicleModel(spec);
+            fallbackCar.setTransform(0f, 0f, 0f, 0f);
+        }
+        pbr.setTransform(spec, 0f, 0f, 0f, 0f);
     }
 
     @Override void renderModels(ModelBatch batch) {
