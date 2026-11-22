@@ -1,35 +1,53 @@
 # StreetDrag
 
-A [libGDX](https://libgdx.com/) project generated with [gdx-liftoff](https://github.com/libgdx/gdx-liftoff).
+StreetDrag is an offline-first LibGDX drag-racing game for Android and desktop.
 
-This project was generated with a template including simple application launchers and an `ApplicationAdapter` extension that draws libGDX logo.
+## Current gameplay
 
-## Platforms
+- 402 m drag races against a local AI rival.
+- Local garage with 16 selectable catalogue entries.
+- Performance upgrades for engine, turbo, gearbox and tires.
+- Local money, vehicle selection and upgrade progress using LibGDX Preferences.
+- Four race camera modes: chase, hood, side and wide.
+- Touch controls on Android and keyboard controls on desktop.
+- Procedural night track and garage environments.
+- PBR rendering through gdx-gltf, image-based lighting and dynamic directional shadows.
+- Imported GLB vehicle assets stored in `assets/models/cars`.
 
-- `core`: Main module with the application logic shared by all platforms.
-- `lwjgl3`: Primary desktop platform using LWJGL3; was called 'desktop' in older docs.
-- `android`: Android mobile platform. Needs Android SDK.
+## Offline behavior
 
-## Gradle
+The Android manifest removes INTERNET and ACCESS_NETWORK_STATE permissions from the merged app manifest. No network login, matchmaking, remote profile or server API is used by the current game code. The race opponent is local AI and progress is stored on the device.
 
-This project uses [Gradle](https://gradle.org/) to manage dependencies.
-The Gradle wrapper was included, so you can run Gradle tasks using `gradlew.bat` or `./gradlew` commands.
-Useful Gradle tasks and flags:
+## Vehicle assets
 
-- `--continue`: when using this flag, errors will not stop the tasks from running.
-- `--daemon`: thanks to this flag, Gradle daemon will be used to run chosen tasks.
-- `--offline`: when using this flag, cached dependency archives will be used.
-- `--refresh-dependencies`: this flag forces validation of all dependencies. Useful for snapshot versions.
-- `android:lint`: performs Android project validation.
-- `build`: builds sources and archives of every project.
-- `cleanEclipse`: removes Eclipse project data.
-- `cleanIdea`: removes IntelliJ project data.
-- `clean`: removes `build` folders, which store compiled classes and built archives.
-- `eclipse`: generates Eclipse project data.
-- `idea`: generates IntelliJ project data.
-- `lwjgl3:jar`: builds application's runnable jar, which can be found at `lwjgl3/build/libs`.
-- `lwjgl3:run`: starts the application.
-- `test`: runs unit tests (if any).
+All 12 supplied GLB files are included under `assets/models/cars`. The catalogue contains 16 vehicle entries; some entries intentionally share a GLB because the supplied pack has fewer unique meshes than catalogue entries. Two entries expose the remaining `luxury-suv.glb` and `retro-city-car.glb` assets.
 
-Note that most tasks that are not specific to a single project can be run with `name:` prefix, where the `name` should be replaced with the ID of a specific project.
-For example, `core:clean` removes `build` folder only from the `core` project.
+The GLB files and their original attribution/license notes are also retained in `vehicle_source`. Keep those notices with the project when redistributing the game.
+
+## Build Android APK
+
+1. Install JDK 17 (or the JDK supported by the installed Android Gradle Plugin) and Android SDK.
+2. Create a local-only `local.properties` in the repository root, for example:
+
+   ```properties
+   sdk.dir=D:/Android/Sdk
+   ```
+
+3. Build:
+
+   ```powershell
+   .\gradlew.bat :core:clean :core:compileJava :android:assembleDebug
+   ```
+
+4. APK output:
+
+   `android/build/outputs/apk/debug/android-debug.apk`
+
+The Android launcher requests OpenGL ES 3.0.
+
+## Project modules
+
+- `core`: game logic, screens, physics and rendering.
+- `android`: Android launcher and packaging.
+- `lwjgl3`: desktop launcher.
+- `assets`: game art and 3D models.
