@@ -3,6 +3,11 @@
     xmlns:tools="http://schemas.android.com/tools">
   <uses-feature android:glEsVersion="0x00020000" android:required="true"/>
   <uses-feature android:name="android.hardware.type.pc" android:required="false" />
+
+  <!-- Force an offline-only merged manifest even if a future library adds network permissions. -->
+  <uses-permission android:name="android.permission.INTERNET" tools:node="remove" />
+  <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" tools:node="remove" />
+
   <application
       android:allowBackup="true"
       android:fullBackupContent="true"
@@ -19,10 +24,9 @@
         android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize|screenLayout"
         android:exported="true">
         <intent-filter>
-        <action android:name="android.intent.action.MAIN"/>
-        <category android:name="android.intent.category.LAUNCHER"/>
-      </intent-filter>
-    </activity>
+          <action android:name="android.intent.action.MAIN"/>
+          <category android:name="android.intent.category.LAUNCHER"/>
+        </intent-filter>
+      </activity>
   </application>
-
 </manifest>
