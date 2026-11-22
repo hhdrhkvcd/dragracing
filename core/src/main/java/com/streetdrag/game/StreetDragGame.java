@@ -66,6 +66,8 @@ public final class StreetDragGame extends Game {
         int careerUnlocked = prefs.getInteger("career_unlocked", 0);
         int careerWins = prefs.getInteger("career_wins", 0);
         int raceDistance = prefs.getInteger("race_distance", 402);
+        float best402 = prefs.getFloat("best_402", 0f);
+        float best804 = prefs.getFloat("best_804", 0f);
         int careerEvent;
         int careerOpponentIndex;
         boolean careerMode;
@@ -142,7 +144,16 @@ public final class StreetDragGame extends Game {
             save();
         }
 
-        void recordRaceResult(boolean won) {
+        float bestTime() { return raceDistance == 804 ? best804 : best402; }
+
+        void recordRaceResult(boolean won, float raceTime) {
+            if (won && raceTime > 0f) {
+                if (raceDistance == 804) {
+                    if (best804 <= 0f || raceTime < best804) best804 = raceTime;
+                } else {
+                    if (best402 <= 0f || raceTime < best402) best402 = raceTime;
+                }
+            }
             if (careerMode) {
                 if (won) {
                     money += 35000 + careerEvent * 5000;
@@ -176,6 +187,8 @@ public final class StreetDragGame extends Game {
             prefs.putInteger("career_unlocked", careerUnlocked);
             prefs.putInteger("career_wins", careerWins);
             prefs.putInteger("race_distance", raceDistance);
+            prefs.putFloat("best_402", best402);
+            prefs.putFloat("best_804", best804);
             for (int c = 0; c < levels.length; c++) {
                 for (int u = 0; u < 4; u++) prefs.putInteger("u_" + c + "_" + u, levels[c][u]);
             }
