@@ -37,9 +37,10 @@ final class MainMenuScreen extends Base3DScreen {
                 float y = point.y;
 
                 if (y < 160f) {
-                    if (x < 320f) game.showRace();
-                    else if (x < 640f) game.showGarage();
-                    else if (x < 960f) game.showTuning();
+                    if (x < 260f) game.showRace();
+                    else if (x < 510f) game.showGarage();
+                    else if (x < 760f) game.showTuning();
+                    else if (x < 1010f) game.showDyno();
                     else game.showCareer();
                     return true;
                 }
@@ -99,10 +100,11 @@ final class MainMenuScreen extends Base3DScreen {
         beginHud();
         panel(0, 0, 1280, 190, new Color(.008f, .014f, .027f, .96f));
         panel(28, 420, 470, 250, new Color(.012f, .024f, .043f, .90f));
-        panel(28, 22, 300, 135, new Color(.48f, .055f, .07f, 1f));
-        panel(340, 22, 300, 135, new Color(.075f, .17f, .30f, 1f));
-        panel(652, 22, 300, 135, new Color(.14f, .22f, .12f, 1f));
-        panel(964, 22, 288, 135, new Color(.06f, .34f, .19f, 1f));
+        panel(18, 22, 240, 135, new Color(.48f, .055f, .07f, 1f));
+        panel(270, 22, 240, 135, new Color(.075f, .17f, .30f, 1f));
+        panel(522, 22, 240, 135, new Color(.14f, .22f, .12f, 1f));
+        panel(774, 22, 240, 135, new Color(.12f, .20f, .30f, 1f));
+        panel(1026, 22, 236, 135, new Color(.06f, .34f, .19f, 1f));
         panel(515, 428, 330, 75, new Color(.05f, .15f, .22f, .95f));
 
         beginText();
@@ -114,10 +116,11 @@ final class MainMenuScreen extends Base3DScreen {
         text("POWER   " + (int)(spec.powerHp * game.profile.engineMultiplier()) + " HP", 60, 405, .90f, Color.CYAN);
         text("CAREER WINS   " + game.profile.careerWins, 60, 365, .90f, Color.LIGHT_GRAY);
         text("DISTANCE  " + game.profile.raceDistance + " M   (TAP / D)", 550, 475, 1.0f, Color.WHITE);
-        text("QUICK RACE", 95, 83, 1.18f, Color.WHITE);
-        text("GARAGE", 435, 83, 1.18f, Color.WHITE);
-        text("TUNING", 748, 83, 1.18f, Color.WHITE);
-        text("CAREER", 1055, 83, 1.18f, Color.WHITE);
+        text("QUICK RACE", 55, 83, 1.05f, Color.WHITE);
+        text("GARAGE", 342, 83, 1.05f, Color.WHITE);
+        text("TUNING", 590, 83, 1.05f, Color.WHITE);
+        text("DYNO", 855, 83, 1.05f, Color.WHITE);
+        text("CAREER", 1082, 83, 1.05f, Color.WHITE);
         text("LEFT / RIGHT: SELECT CAR     ENTER: RACE     D: DISTANCE     K: CAREER",
              285, 210, .78f, Color.LIGHT_GRAY);
         text("LOCAL SAVE  /  NO ACCOUNT  /  NO INTERNET", 60, 245, .78f, Color.LIGHT_GRAY);
