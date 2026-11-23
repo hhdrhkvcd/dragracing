@@ -49,7 +49,7 @@ final class DynoScreen extends Base3DScreen {
                 } else if (point.x > 900f && point.y < 155f) {
                     startPull();
                 } else if (point.y > 205f && point.y < 530f) {
-                    int sample = Math.max(0, Math.min(6, (int)((point.x - 90f) / 118f)));
+                    int sample = Math.max(0, Math.min(6, (int)((point.x - 58f) / 94f)));
                     rpm = SAMPLE_RPMS[sample];
                     updateReading();
                 }
