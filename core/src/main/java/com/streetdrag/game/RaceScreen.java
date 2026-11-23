@@ -78,14 +78,15 @@ final class RaceScreen extends Base3DScreen {
                     return true;
                 }
                 if (key == Input.Keys.C) { cameraMode = (cameraMode + 1) % 4; return true; }
+                if (key == Input.Keys.M) { game.profile.toggleTransmissionMode(); return true; }
                 if (key == Input.Keys.R) { resetRace(); return true; }
                 if (finished && key == Input.Keys.ENTER) { resetRace(); return true; }
                 if (key == Input.Keys.SPACE) { gas = true; brake = false; }
                 if (key == Input.Keys.DOWN) { brake = true; gas = false; }
                 if (key == Input.Keys.SHIFT_LEFT || key == Input.Keys.SHIFT_RIGHT) clutch = true;
                 if (key == Input.Keys.N) nitro = true;
-                if (key == Input.Keys.UP) player.shiftUp();
-                if (key == Input.Keys.Z) player.shiftDown();
+                if (!game.profile.isAutomatic() && key == Input.Keys.UP) player.shiftUp();
+                if (!game.profile.isAutomatic() && key == Input.Keys.Z) player.shiftDown();
                 return true;
             }
 
@@ -112,13 +113,17 @@ final class RaceScreen extends Base3DScreen {
             if (careerRace) game.showCareer(); else game.showMenu();
             return;
         }
+        if (y > 490f && y <= 535f && x > 1010f) {
+            game.profile.toggleTransmissionMode();
+            return;
+        }
         if (y > 535f && x > 820f) { cameraMode = (cameraMode + 1) % 4; return; }
         if (y < 165f) {
             if (x < 190f) { brake = true; gas = false; }
             else if (x < 390f) nitro = true;
             else if (x < 570f) clutch = true;
-            else if (x < 760f) player.shiftDown();
-            else if (x < 950f) player.shiftUp();
+            else if (x < 760f && !game.profile.isAutomatic()) player.shiftDown();
+            else if (x < 950f && !game.profile.isAutomatic()) player.shiftUp();
             else { gas = true; brake = false; }
         }
     }
@@ -149,7 +154,12 @@ final class RaceScreen extends Base3DScreen {
         }
 
         raceElapsed += delta;
-        player.update(delta, gas ? 1f : 0f, brake ? 1f : 0f, clutch ? 1f : 0f, nitro);
+        if (game.profile.isAutomatic()) {
+            if (player.getRpm() > 6750f && player.getGear() < 6) player.shiftUp();
+            else if (player.getRpm() < 2350f && player.getGear() > 1) player.shiftDown();
+        }
+        player.update(delta, gas ? 1f : 0f, brake ? 1f : 0f,
+            game.profile.isAutomatic() ? 0f : (clutch ? 1f : 0f), nitro);
         if (rival.getRpm() > 6500f) rival.shiftUp();
         if (rival.getRpm() < 2100f && rival.getGear() > 1 && rival.getSpeedKmh() < 30f) rival.shiftDown();
         boolean aiNitro = rival.getDistance() > finishDistance * .12f
@@ -242,6 +252,8 @@ final class RaceScreen extends Base3DScreen {
         text("SPEED  " + (int)player.getSpeedKmh() + " KM/H", 38, 575, 1.2f, Color.WHITE);
         text("RPM  " + (int)player.getRpm(), 455, 550, 1.05f, Color.WHITE);
         text("GEAR  " + player.getGear(), 890, 575, 1.1f, Color.WHITE);
+        text("MODE [M]  " + (game.profile.isAutomatic() ? "AUTO" : "MANUAL"),
+            1035, 515, .82f, Color.YELLOW);
         text("DIST  " + (int)player.getDistance() + " / " + (int)finishDistance + " M",
              890, 545, .9f, Color.LIGHT_GRAY);
         text("CAMERA  [C]", 1050, 575, .92f, Color.CYAN);
@@ -264,8 +276,10 @@ final class RaceScreen extends Base3DScreen {
             text(careerRace ? "TAP LEFT: CAREER MAP  /  ENTER: REPLAY"
                 : "TAP LEFT: MENU  /  ENTER: REPLAY", 395, 180, .95f, Color.YELLOW);
         }
-        text("HOLD SPACE: GAS   UP: SHIFT   Z: DOWN   N: NITRO   C: CAMERA",
-             320, 178, .78f, Color.LIGHT_GRAY);
+        text(game.profile.isAutomatic()
+            ? "AUTO SHIFT ON   M: MANUAL   N: NITRO   C: CAMERA"
+            : "SPACE: GAS   UP: SHIFT   Z: DOWN   M: AUTO   N: NITRO   C: CAMERA",
+            320, 178, .74f, Color.LIGHT_GRAY);
         endText();
     }
 
