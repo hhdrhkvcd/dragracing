@@ -46,6 +46,7 @@ final class RaceScreen extends Base3DScreen {
         player.setEngineMultiplier(game.profile.engineMultiplier() * game.profile.turboMultiplier());
         player.setGripMultiplier(game.profile.gripMultiplier());
         player.setGearboxMultiplier(game.profile.gearboxMultiplier());
+        player.setMassMultiplier(game.profile.massMultiplier());
         rival.setEngineMultiplier(careerRace ? .92f + careerEventIndex * .035f : 1.03f);
 
         pbr = new PbrVehicleFleetRenderer(camera, playerSpec, rivalSpec);
