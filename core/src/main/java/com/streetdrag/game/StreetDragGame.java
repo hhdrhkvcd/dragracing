@@ -60,6 +60,7 @@ public final class StreetDragGame extends Game {
     /** Device-local save. No account or network service is used. */
     static final class Profile {
         private static final float[] DEFAULT_RATIOS = {3.20f, 2.15f, 1.58f, 1.22f, .98f, .80f};
+        private static final int[] UPGRADE_BASE_COSTS = {12000, 15000, 8000, 9000, 7000, 8500, 10000, 18000};
         private final Preferences prefs = Gdx.app.getPreferences("StreetDrag3D");
         int money = prefs.getInteger("money", 125000);
         int selected = prefs.getInteger("selected", 0);
@@ -71,7 +72,7 @@ public final class StreetDragGame extends Game {
         int careerEvent;
         int careerOpponentIndex;
         boolean careerMode;
-        final int[][] levels = new int[VehicleSpec.ALL.length][4];
+        final int[][] levels = new int[VehicleSpec.ALL.length][8];
         final float[] gearRatios = new float[6];
         float finalDrive;
 
@@ -93,10 +94,13 @@ public final class StreetDragGame extends Game {
 
         VehicleSpec car() { return VehicleSpec.ALL[selected]; }
         int level(int category) { return levels[selected][category]; }
-        int upgradeCost(int category) { return 12000 * levels[selected][category]; }
+        int upgradeCost(int category) {
+            if (category < 0 || category >= UPGRADE_BASE_COSTS.length) return 0;
+            return UPGRADE_BASE_COSTS[category] * levels[selected][category];
+        }
 
         boolean upgrade(int category) {
-            if (category < 0 || category >= 4) return false;
+            if (category < 0 || category >= 8) return false;
             int cost = upgradeCost(category);
             if (levels[selected][category] >= 10 || money < cost) return false;
             money -= cost;
@@ -171,10 +175,18 @@ public final class StreetDragGame extends Game {
             save();
         }
 
-        float engineMultiplier() { return 1f + (levels[selected][0] - 1) * .075f; }
-        float turboMultiplier() { return 1f + (levels[selected][1] - 1) * .065f; }
-        float gearboxMultiplier() { return 1f + (levels[selected][2] - 1) * .07f; }
+        float engineMultiplier() {
+            return 1f + (levels[selected][0] - 1) * .055f
+                + (levels[selected][4] - 1) * .02f
+                + (levels[selected][5] - 1) * .025f;
+        }
+        float turboMultiplier() { return 1f + (levels[selected][1] - 1) * .075f; }
+        float gearboxMultiplier() {
+            return 1f + (levels[selected][2] - 1) * .07f
+                + (levels[selected][6] - 1) * .045f;
+        }
         float gripMultiplier() { return 1f + (levels[selected][3] - 1) * .045f; }
+        float massMultiplier() { return Math.max(.78f, 1f - (levels[selected][7] - 1) * .025f); }
 
         void reward(int amount) {
             money += Math.max(0, amount);
