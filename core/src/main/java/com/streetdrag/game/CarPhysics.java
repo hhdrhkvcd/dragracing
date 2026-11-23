@@ -12,6 +12,7 @@ public final class CarPhysics {
     private final float[] ratios = DEFAULT_RATIOS.clone();
     private float finalDrive = 3.55f;
     private float finishDistance = 402f;
+    private float massMultiplier = 1f;
     private float speedMps, distanceM, rpm = IDLE_RPM, nitro = 100f;
     private float acceleration, shiftTimer, engineMultiplier = 1f, grip = 1f;
     private float gearboxMultiplier = 1f;
@@ -51,7 +52,8 @@ public final class CarPhysics {
         boolean limiter = rpm >= REDLINE_RPM;
         rpm = clamp(rpm, IDLE_RPM, REDLINE_RPM);
 
-        float torque = torqueNm * torqueCurve(rpm);
+        float effectiveMass = massKg * massMultiplier;
+        float torque = torqueNm * torqueCurve(rpm) * engineMultiplier;
         nitroActive = useNitro && throttle > .05f && nitro > 0f;
         float nitroMultiplier = 1f;
         if (nitroActive) {
@@ -62,16 +64,16 @@ public final class CarPhysics {
         float wheelForce = torque * ratio * finalDrive * .87f / WHEEL_RADIUS;
         float watts = powerHp * 745.7f * engineMultiplier * nitroMultiplier;
         float powerForce = watts * .90f / Math.max(speedMps, 4f);
-        float traction = massKg * 9.81f * (awd ? 1.20f : .97f) * grip;
+        float traction = effectiveMass * 9.81f * (awd ? 1.20f : .97f) * grip;
         float driveForce = Math.min(wheelForce, Math.min(powerForce, traction));
         if (shiftTimer > 0f) driveForce *= .24f;
         if (limiter) driveForce *= .12f;
         driveForce *= throttle * (1f - clutch);
 
         float aero = .5f * 1.225f * dragArea * speedMps * speedMps;
-        float rolling = massKg * 9.81f * .013f;
-        float braking = brake * massKg * 10f;
-        acceleration = (driveForce - aero - rolling - braking) / massKg;
+        float rolling = effectiveMass * 9.81f * .013f;
+        float braking = brake * effectiveMass * 10f;
+        acceleration = (driveForce - aero - rolling - braking) / effectiveMass;
         speedMps = clamp(speedMps + acceleration * delta, 0f, 110f);
         distanceM = Math.min(finishDistance, distanceM + speedMps * delta);
     }
@@ -114,6 +116,15 @@ public final class CarPhysics {
     public void setEngineMultiplier(float value) { engineMultiplier = clamp(value, 1f, 2.5f); }
     public void setGripMultiplier(float value) { grip = clamp(value, .7f, 1.6f); }
     public void setGearboxMultiplier(float value) { gearboxMultiplier = clamp(value, 1f, 2f); }
+    public void setMassMultiplier(float value) { massMultiplier = clamp(value, .78f, 1f); }
+    public float getTorqueAtRpm(float requestedRpm) {
+        float safeRpm = clamp(requestedRpm, IDLE_RPM, REDLINE_RPM);
+        return torqueNm * torqueCurve(safeRpm) * engineMultiplier;
+    }
+    public float getPowerHpAtRpm(float requestedRpm) {
+        float safeRpm = clamp(requestedRpm, IDLE_RPM, REDLINE_RPM);
+        return getTorqueAtRpm(safeRpm) * safeRpm / 7127f;
+    }
     public float getSpeedKmh() { return speedMps * 3.6f; }
     public float getSpeedMps() { return speedMps; }
     public float getDistance() { return distanceM; }
