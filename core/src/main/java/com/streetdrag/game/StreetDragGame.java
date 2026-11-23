@@ -68,6 +68,7 @@ public final class StreetDragGame extends Game {
         int careerUnlocked = prefs.getInteger("career_unlocked", 0);
         int careerWins = prefs.getInteger("career_wins", 0);
         int raceDistance = prefs.getInteger("race_distance", 402);
+        boolean automatic = prefs.getBoolean("automatic_transmission", false);
         float best402 = prefs.getFloat("best_402", 0f);
         float best804 = prefs.getFloat("best_804", 0f);
         int careerEvent;
@@ -140,6 +141,12 @@ public final class StreetDragGame extends Game {
             save();
         }
 
+        boolean isAutomatic() { return automatic; }
+        void toggleTransmissionMode() {
+            automatic = !automatic;
+            save();
+        }
+
         void startCareerEvent(int event) {
             if (event < 0 || event >= CareerScreen.EVENT_NAMES.length || event > careerUnlocked) return;
             careerMode = true;
@@ -200,6 +207,7 @@ public final class StreetDragGame extends Game {
             prefs.putInteger("career_unlocked", careerUnlocked);
             prefs.putInteger("career_wins", careerWins);
             prefs.putInteger("race_distance", raceDistance);
+            prefs.putBoolean("automatic_transmission", automatic);
             prefs.putFloat("best_402", best402);
             prefs.putFloat("best_804", best804);
             for (int c = 0; c < levels.length; c++) {
