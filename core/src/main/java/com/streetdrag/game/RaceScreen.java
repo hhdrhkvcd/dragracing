@@ -149,6 +149,8 @@ final class RaceScreen extends Base3DScreen {
         elapsed += delta;
         if (!started) {
             countdown -= delta;
+            // Let the driver preload the engine on the clutch without moving the car.
+            player.update(delta, gas ? 1f : 0f, 0f, 1f, false);
             if (countdown <= 0f) started = true;
             return;
         }
