@@ -48,6 +48,7 @@ public final class StreetDragGame extends Game {
     public void showCareer() { replaceScreen(new CareerScreen(this)); }
     public void showGarage() { replaceScreen(new GarageScreen(this)); }
     public void showTuning() { replaceScreen(new TuningScreen(this)); }
+    public void showDyno() { replaceScreen(new DynoScreen(this)); }
     public void showRace() { replaceScreen(new RaceScreen(this)); }
 
     @Override public void dispose() {
