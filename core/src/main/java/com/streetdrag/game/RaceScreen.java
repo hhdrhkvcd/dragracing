@@ -129,6 +129,7 @@ final class RaceScreen extends Base3DScreen {
     }
 
     private void resetRace() {
+        if (careerRace) game.profile.startCareerEvent(careerEventIndex);
         player.reset();
         rival.reset();
         gas = brake = clutch = nitro = false;
